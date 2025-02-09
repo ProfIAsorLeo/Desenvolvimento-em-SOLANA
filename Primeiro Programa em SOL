@@ -1,0 +1,52 @@
+use anchor_lang::prelude::*;
+
+declare_id!("WwvDAhZJxsKPKJZYsc8euBFDB2cNb7Nzpotqxjnp4w5");
+
+pub const ANCHOR_DISCRIMINATOR_SIZE: usize = 8;
+
+#[program]
+pub mod favoritos {
+    use super::*;
+
+    pub fn set_favoritos(ctx: Context<SetFavoritos>, numero: u64, hobbies: Vec<String>, cor: String) -> Result<()> {
+        msg!("Saudações de {}", ctx.program_id);
+        let user_public_key = ctx.accounts.user.key();
+        msg!("User {} ' O número favorita é {}, A cor Favorita é {}, O hobbie favorito é {:?}", user_public_key, numero, cor, hobbies);
+
+        let favoritos = &mut ctx.accounts.favoritos; // Correto: context.accounts
+        favoritos.numero = numero;
+        favoritos.cor = cor;
+        favoritos.hobbies = hobbies;
+
+        Ok(())
+    }
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct Favoritos {
+    pub numero: u64,
+    #[max_len(50)]
+    pub cor: String,
+    #[max_len(5, 50)]
+    pub hobbies: Vec<String>,
+}
+
+#[derive(Accounts)]
+pub struct SetFavoritos<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = ANCHOR_DISCRIMINATOR_SIZE + Favoritos::INIT_SPACE,
+        seeds = [b"favoritos", user.key().as_ref()], // Correto: user.key().as_ref()
+        bump,
+    )]
+    pub favoritos: Account<'info, Favoritos>,
+
+    pub system_program: Program<'info, System>,
+}
+
+    
