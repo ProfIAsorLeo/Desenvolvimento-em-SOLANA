@@ -1,18 +1,24 @@
+//Dois pontos  são usados para espaço 
+//Importando o prgrama prelude
 use anchor_lang::prelude::*;
-
+//Endereço do programa para o contrato inteligente
 declare_id!("WwvDAhZJxsKPKJZYsc8euBFDB2cNb7Nzpotqxjnp4w5");
-
+//Verificações da ANCHOR criação da constante(Tipo de conta) a block chain precisa de 8 bytes + o espaço economizado para gravar algo
 pub const ANCHOR_DISCRIMINATOR_SIZE: usize = 8;
-
+//Marcro programa, SOLANA
 #[program]
+//Modulo regular em RUST definindo a função favoritos
 pub mod favoritos {
     use super::*;
-
+    //Primeiro argumento context de definir favoritos
     pub fn set_favoritos(ctx: Context<SetFavoritos>, numero: u64, hobbies: Vec<String>, cor: String) -> Result<()> {
+        // Mensagem macro
         msg!("Saudações de {}", ctx.program_id);
+        // mostrar a chave publica de quem está 
         let user_public_key = ctx.accounts.user.key();
+        //Desloga as opções que as pessoas fornecem
         msg!("User {} ' O número favorita é {}, A cor Favorita é {}, O hobbie favorito é {:?}", user_public_key, numero, cor, hobbies);
-
+        //Escrever as informações na conta fornecida
         let favoritos = &mut ctx.accounts.favoritos; // Correto: context.accounts
         favoritos.numero = numero;
         favoritos.cor = cor;
@@ -21,22 +27,33 @@ pub mod favoritos {
         Ok(())
     }
 }
-
+//criando um macro que vai ser uma conta que vai acessar.
 #[account]
-#[derive(InitSpace)]
+//Deixar favoritos relevante para o Anchor atribuir todas as instâncias para o Favorito.
+//Espaço interno usado por todos os itens
+#[derive(InitSpace)]//precisa especificar o tamanho de cada item individual.
+//Criar um estrutura que vai armazenar os favoritos
 pub struct Favoritos {
+    // criar o número favorito
+    //tamanho máximo do item , pois as String podem variar de tamanho
     pub numero: u64,
     #[max_len(50)]
     pub cor: String,
     #[max_len(5, 50)]
     pub hobbies: Vec<String>,
 }
-
+//E strutura de contas para manipular (armazenar)
+//Quando colocamos o <'info> estamos dizendo que os itens vão persistir enquanto a vida util do objeto persistir , Inform
+//Rust tem uma regra sobre quanto tempo as coisas devem ser mantidas na memória
 #[derive(Accounts)]
 pub struct SetFavoritos<'info> {
+    //convenção de colocar o mesmo nome da estrutura de contas com o mesmo nome do manipulador
+    //Especificar opções para está conta,
+    //mutável , pessoa paga para armazenar
     #[account(mut)]
     pub user: Signer<'info>,
-
+    //Com essa lógica podemos assegurar que a pessoa que asina é a pessoa 
+    //Calcular a semente
     #[account(
         init_if_needed,
         payer = user,
@@ -48,5 +65,3 @@ pub struct SetFavoritos<'info> {
 
     pub system_program: Program<'info, System>,
 }
-
-    
